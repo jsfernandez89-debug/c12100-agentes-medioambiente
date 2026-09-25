@@ -406,7 +406,22 @@ function renderTest(qs,answers={},flags={},resuming=false){
     return `<div class="q ${moved?'moved-out':''}" data-i="${i}" data-id="${esc(q.id)}"><div class="meta">${metaText}</div><div class="stem">${i+1}. ${esc(q.pregunta)}</div>${q.imagen?`<img class="block-question-img" src="${q.imagen}" alt="Página original del ${esc(String(q.tema))}">`:''}${Object.entries(q.opciones||{}).map(([k,v])=>`<label class="opt"><input type="radio" name="q${i}" value="${k}" ${answers[q.id]===k?'checked':''}> <b>${k}.</b> ${esc(v)}</label>`).join('')}${isBlock?'':`<div class="review-row"><label class="review-check"><input type="checkbox" class="flag-out" ${flags[rk]||flags[q.id]||moved?'checked':''} ${moved?'disabled':''}> Quitar de este tema y mover a “Fuera de temario”</label><span class="review-tag">Revisión temática</span></div>`}</div>`
   }).join('')+`<button id="grade">Finalizar y corregir test</button><div id="score"></div>`;
   const persist=()=>{if(!state.current)return;const ans={},fl={};qs.forEach((q,i)=>{const box=test.querySelector(`.q[data-i="${i}"]`);const sel=box?.querySelector('input[type=radio]:checked');if(sel)ans[q.id]=sel.value;const fc=box?.querySelector('.flag-out');if(fc&&fc.checked&&!isThemeFlagged(q))fl[reviewKey(q)]=true});state.current.answers=ans;state.current.flags=fl;saveState();updateProgress(qs)};
-  test.querySelectorAll('input[type=radio],.flag-out').forEach(el=>el.addEventListener('change',persist));
+  // Permitir dejar una pregunta en blanco pulsando de nuevo la respuesta ya seleccionada.
+  test.querySelectorAll('input[type=radio]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      if(el.dataset.wasChecked==='1'){
+        el.checked=false;
+        el.dataset.wasChecked='0';
+        persist();
+      }else{
+        test.querySelectorAll(`input[type=radio][name="${el.name}"]`).forEach(r=>r.dataset.wasChecked='0');
+        el.dataset.wasChecked='1';
+      }
+    });
+    el.addEventListener('change',persist);
+    if(el.checked) el.dataset.wasChecked='1';
+  });
+  test.querySelectorAll('.flag-out').forEach(el=>el.addEventListener('change',persist));
   $('jumpPending').onclick=()=>{const boxes=[...test.querySelectorAll('.q')];const pending=boxes.find(b=>!b.querySelector('input[type=radio]:checked'));(pending||boxes[0])?.scrollIntoView({behavior:'smooth',block:'center'})};
   $('grade').onclick=()=>gradeTest(qs);
   updateProgress(qs);
