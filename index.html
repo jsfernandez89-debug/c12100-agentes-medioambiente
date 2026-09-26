@@ -164,7 +164,7 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
     </div>
     <div class="hero-badge"><strong>7.742</strong><span>preguntas utilizables · banco definitivo auditado</span></div>
   </div>
-</header><main><div class="release-bar"><span class="release-dot"></span><strong>Versión PRO Cloud · nota /10 aplicada a historial y test en curso</strong><span>7.742 preguntas utilizables</span><span>Últimos cuerpos: A1.9200 · B1.3000</span><span>Nube · historial · falladas · reanudación · revisión temática</span></div>
+</header><main><div class="release-bar"><span class="release-dot"></span><strong>Versión PRO Cloud · repaso mixto + por temas · EDISUR corregido · estadísticas separadas</strong><span>7.742 preguntas utilizables</span><span>Últimos cuerpos: A1.9200 · B1.3000</span><span>Nube · historial · falladas · reanudación · revisión temática</span></div>
 <div class="card cloud-card" id="cloudCard"><div class="cloud-head"><div><h2>☁️ Sincronización multidispositivo</h2><p>Inicia sesión una vez y tu test en curso, estadísticas, preguntas falladas y revisiones se mantendrán sincronizados entre trabajo, casa y otros dispositivos.</p></div><div class="cloud-badge"><span class="sync-dot" id="syncDot"></span><span id="syncStatus">Modo local</span></div></div><div class="cloud-auth" id="cloudAuth"><div><label>Correo electrónico</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="tu@email.com"></div><div><label>Contraseña de la app</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></div><button id="cloudLogin">Entrar</button><button class="secondary" id="cloudSignup">Crear cuenta</button></div><div class="cloud-session" id="cloudSession"><div class="cloud-user-line"><div class="cloud-user"><strong id="cloudUserEmail">Usuario</strong><br><span id="cloudLastSync" class="cloud-last">Sin sincronizaciones todavía</span></div><div class="cloud-actions"><button class="secondary" id="cloudSyncNow">Sincronizar ahora</button><button class="secondary" id="cloudPull">Cargar desde nube</button><button class="secondary" id="cloudPush">Subir este dispositivo</button><button class="secondary danger" id="cloudLogout">Cerrar sesión</button></div></div></div><div class="cloud-message" id="cloudMessage"></div><div class="cloud-help"><b>Copia local + nube:</b> si no hay Internet, la app sigue guardando en este navegador y sincroniza cuando vuelve la conexión. La contraseña nunca se guarda en la aplicación.</div></div>
 <div class="card controls-card"><div class="section-title"><h2>Configura tu test</h2><span>Combina libremente varias partes, temas, cuerpos y convocatorias</span></div><div class="grid">
 <div><label>Parte <span class="multi-hint">(varias)</span></label><select id="parte" class="multi-source" multiple aria-hidden="true"><option value="ALL" selected>Todas</option><option value="REPASO">TEST DE REPASO</option><option>COMÚN</option><option>ESPECÍFICO</option><option>FUERA DE TEMARIO</option><option>EDISUR</option><option>BLOQUES DE ESTUDIO</option></select><div class="multi-picker" data-for="parte"></div></div>
@@ -179,12 +179,14 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
 <div class="card dashboard-card"><div class="dashboard-head"><div><h2>Rendimiento y progreso</h2><p>Estadísticas acumuladas por tema a partir de los test finalizados.</p></div><div class="small-actions"><button class="secondary" id="exportReview">Exportar revisión</button><button class="secondary" id="resetStats">Reiniciar progreso</button></div></div><div class="kpi-grid"><div class="kpi"><strong id="kpiTests">0</strong><span>Tests finalizados</span></div><div class="kpi"><strong id="kpiAttempts">0</strong><span>Respuestas</span></div><div class="kpi"><strong id="kpiAccuracy">—</strong><span>Acierto global</span></div><div class="kpi"><strong id="kpiCommonAccuracy">—</strong><span>Acierto parte común</span></div><div class="kpi"><strong id="kpiSpecificAccuracy">—</strong><span>Acierto parte específica</span></div><div class="kpi"><strong id="kpiFailed">0</strong><span>Falladas pendientes</span></div></div><div class="stats-table-wrap"><table class="stats-table"><thead><tr><th>Tema oficial</th><th>Realizadas</th><th>Aciertos</th><th>Errores</th><th>% acierto</th></tr></thead><tbody id="themeStats"><tr><td colspan="5">Todavía no hay test finalizados.</td></tr></tbody></table></div><div class="local-note">Las preguntas marcadas “fuera de temario” se excluyen únicamente del tema concreto en el que estaban clasificadas. La misma pregunta puede seguir disponible en cualquier otro tema en el que también esté incluida. “Exportar revisión” genera un CSV con el tema concreto que debe revisarse.</div></div>
 
 <div class="card" id="reviewStatsCard">
- <div class="section-title"><h2>Evolución en test de repaso</h2><span>Simulacros de 100 preguntas</span></div>
+ <div class="section-title"><h2>Evolución en test de repaso</h2><span>Separado por tipo de repaso</span></div>
+ <h3 style="margin:12px 0 8px">Simulacros · Común + Específico/EDISUR</h3>
  <div class="review-kpis"><div class="review-kpi"><strong id="reviewCount">0</strong><span>Simulacros</span></div><div class="review-kpi"><strong id="reviewAvg">—</strong><span>Nota media /10</span></div><div class="review-kpi"><strong id="reviewLast">—</strong><span>Última nota /10</span></div><div class="review-kpi"><strong id="reviewBest">—</strong><span>Mejor nota /10</span></div></div>
- <div style="overflow:auto"><table class="review-table"><thead><tr><th>Test</th><th>Fecha</th><th class="num">Aciertos</th><th class="num">Errores</th><th class="num">Blanco</th><th class="num">Nota /10</th></tr></thead><tbody id="reviewHistory"><tr><td colspan="6">Todavía no hay test de repaso finalizados.</td></tr></tbody></table></div>
+ <div style="overflow:auto"><table class="review-table"><thead><tr><th>Test</th><th>Fecha</th><th>Temas incluidos</th><th class="num">Aciertos</th><th class="num">Errores</th><th class="num">Blanco</th><th class="num">Nota /10</th></tr></thead><tbody id="reviewHistory"><tr><td colspan="7">Todavía no hay simulacros finalizados.</td></tr></tbody></table></div>
+ <h3 style="margin:22px 0 8px">Repasos por tema individual</h3>
+ <div class="review-kpis"><div class="review-kpi"><strong id="topicReviewCount">0</strong><span>Tests por tema</span></div><div class="review-kpi"><strong id="topicReviewAvg">—</strong><span>Nota media /10</span></div><div class="review-kpi"><strong id="topicReviewLast">—</strong><span>Última nota /10</span></div><div class="review-kpi"><strong id="topicReviewBest">—</strong><span>Mejor nota /10</span></div></div>
+ <div style="overflow:auto"><table class="review-table"><thead><tr><th>Test</th><th>Fecha</th><th>Tema</th><th class="num">Preguntas</th><th class="num">Aciertos</th><th class="num">Errores</th><th class="num">Blanco</th><th class="num">Nota /10</th></tr></thead><tbody id="topicReviewHistory"><tr><td colspan="8">Todavía no hay repasos por tema finalizados.</td></tr></tbody></table></div>
 </div>
-
-
 
 <div id="reviewTimerBox" style="display:none;margin:0 0 12px;padding:12px 16px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-weight:700">
 ⏱️ Tiempo restante: <span id="reviewTimer">03:00:00</span><span id="reviewTimerMsg" style="margin-left:10px"></span>
@@ -385,7 +387,7 @@ function updateAvailable(){
   const count=filtered().length;
   if(isReviewMode()){
     const p=filtered(),cc=p.filter(q=>String(effectivePart(q)).toUpperCase()==='COMÚN').length,ss=p.filter(q=>['ESPECÍFICO','EDISUR'].includes(String(effectivePart(q)).toUpperCase())).length;
-    $('available').textContent=`Test de repaso: ${cc} comunes y ${ss} específicas/EDISUR disponibles · se generarán 100 (30 + 70)`;
+    if(isTopicReviewMode())$('available').textContent=`Repaso por tema: ${p.length} preguntas disponibles en los temas seleccionados`;else $('available').textContent=`Simulacro: ${cc} comunes y ${ss} específicas/EDISUR disponibles · 100 preguntas (30 + 70)`;
   }else $('available').textContent=(modo.value==='FAILED'?'Falladas disponibles: ':'Disponibles con filtros: ')+count;
 }
 parte.addEventListener('change',()=>{
@@ -395,7 +397,7 @@ parte.addEventListener('change',()=>{
     n.value='100';n.disabled=true;
   }else n.disabled=false;
 });
-tema.addEventListener('change',()=>{renderMultiPicker(tema);refillOthers()});
+tema.addEventListener('change',()=>{renderMultiPicker(tema);refillOthers();if(isReviewMode()){if(isTopicReviewMode()){n.disabled=false;if(n.value==='100')n.value='20'}else{let o=[...n.options].find(x=>x.value==='100');if(!o){o=document.createElement('option');o.value='100';o.textContent='100';n.appendChild(o)}n.value='100';n.disabled=true}updateAvailable()}});
 cuerpo.addEventListener('change',()=>{renderMultiPicker(cuerpo);updateAvailable()});
 anio.addEventListener('change',()=>{renderMultiPicker(anio);updateAvailable()});
 modo.addEventListener('change',()=>{refillOthers();updateAvailable()});
@@ -404,14 +406,48 @@ function currentFilters(){return {parte:selectedValues(parte),tema:selectedValue
 
 
 
+
+function reviewSelectedTopicKeys(){return selectedValues(tema).filter(x=>x!=='ALL')}
+function isTopicReviewMode(){return isReviewMode()&&reviewSelectedTopicKeys().length>0}
+function reviewQuestionTopicLabel(q){
+ const p=String(effectivePart(q)||'').toUpperCase(),t=String(effectiveTema(q)||'');
+ return `${p==='COMÚN'?'Común':p==='EDISUR'?'EDISUR':'Específico'} ${t}`;
+}
+function reviewTopicsFromItems(items){
+ const groups={'COMÚN':new Set(),'ESPECÍFICO':new Set(),'EDISUR':new Set()};
+ (items||[]).forEach(it=>{const q=qById(it.id);if(!q)return;const p=String(effectivePart(q)||'').toUpperCase(),t=String(effectiveTema(q)||'');if(groups[p]&&t)groups[p].add(t)});
+ const sortn=s=>[...s].sort((a,b)=>(Number(a)||999)-(Number(b)||999));
+ const bits=[];if(groups['COMÚN'].size)bits.push(`Común: ${sortn(groups['COMÚN']).join(', ')}`);if(groups['ESPECÍFICO'].size)bits.push(`Específico: ${sortn(groups['ESPECÍFICO']).join(', ')}`);if(groups['EDISUR'].size)bits.push(`EDISUR: ${sortn(groups['EDISUR']).join(', ')}`);
+ return bits.join(' · ')||'—';
+}
+function inferReviewKind(h){
+ if(h.reviewKind)return h.reviewKind;
+ const parts=new Set((h.items||[]).map(it=>{const q=qById(it.id);return q?String(effectivePart(q)||'').toUpperCase():''}).filter(Boolean));
+ return parts.has('COMÚN')&&(parts.has('ESPECÍFICO')||parts.has('EDISUR'))?'SIMULACRO':'TEMA';
+}
+function balancedTake(pool,count,selectedKeys){
+ if(!selectedKeys?.length)return shuffle([...pool]).slice(0,count);
+ const buckets=selectedKeys.map(k=>pool.filter(q=>themeKey(q)===k)).filter(b=>b.length);
+ if(!buckets.length)return [];
+ buckets.forEach(b=>shuffle(b));
+ const out=[];let i=0;
+ while(out.length<count){
+  let added=false;
+  for(const b of buckets){if(i<b.length&&out.length<count){out.push(b[i]);added=true}}
+  if(!added)break;i++;
+ }
+ return out;
+}
 function reviewHistoryRows(){
-  const hs=(state.history||[]).filter(h=>h.reviewTest).sort((a,b)=>Number(b.finishedAt||0)-Number(a.finishedAt||0));
-  const scores=hs.map(h=>Number(h.officialScore)).filter(Number.isFinite);
-  $('reviewCount').textContent=hs.length;
-  $('reviewAvg').textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2):'—';
-  $('reviewLast').textContent=scores.length?scores[0].toFixed(2):'—';
-  $('reviewBest').textContent=scores.length?Math.max(...scores).toFixed(2):'—';
-  $('reviewHistory').innerHTML=hs.length?hs.map(h=>`<tr><td>Repaso ${h.reviewNo||'—'}</td><td>${h.finishedAt?new Date(h.finishedAt).toLocaleString():'—'}</td><td class="num">${h.correct||0}</td><td class="num">${h.wrong||0}</td><td class="num">${h.blank||0}</td><td class="num"><b>${Number(h.officialScore||0).toFixed(2)}</b></td></tr>`).join(''):'<tr><td colspan="6">Todavía no hay test de repaso finalizados.</td></tr>';
+ const all=(state.history||[]).filter(h=>h.reviewTest).sort((a,b)=>Number(b.finishedAt||0)-Number(a.finishedAt||0));
+ const sims=all.filter(h=>inferReviewKind(h)==='SIMULACRO'), topics=all.filter(h=>inferReviewKind(h)==='TEMA');
+ function fillKpis(arr,prefix){
+  const scores=arr.map(h=>Number(h.officialScore)).filter(Number.isFinite);
+  $(prefix+'Count').textContent=arr.length;$(prefix+'Avg').textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2):'—';$(prefix+'Last').textContent=scores.length?scores[0].toFixed(2):'—';$(prefix+'Best').textContent=scores.length?Math.max(...scores).toFixed(2):'—';
+ }
+ fillKpis(sims,'review');fillKpis(topics,'topicReview');
+ $('reviewHistory').innerHTML=sims.length?sims.map((x,i)=>`<tr><td>Simulacro ${x.reviewNo||sims.length-i}</td><td>${x.finishedAt?new Date(x.finishedAt).toLocaleString():'—'}</td><td>${reviewTopicsFromItems((x.items||[]).slice(0,x.reviewOrdinaryCount||100))}</td><td class="num">${x.correct||0}</td><td class="num">${x.wrong||0}</td><td class="num">${x.blank||0}</td><td class="num"><b>${Number(x.officialScore||0).toFixed(2)}</b></td></tr>`).join(''):'<tr><td colspan="7">Todavía no hay simulacros finalizados.</td></tr>';
+ $('topicReviewHistory').innerHTML=topics.length?topics.map((x,i)=>`<tr><td>Repaso ${x.reviewNo||topics.length-i}</td><td>${x.finishedAt?new Date(x.finishedAt).toLocaleString():'—'}</td><td>${reviewTopicsFromItems((x.items||[]).slice(0,x.reviewOrdinaryCount||x.items?.length||0))}</td><td class="num">${x.reviewOrdinaryCount||x.items?.length||0}</td><td class="num">${x.correct||0}</td><td class="num">${x.wrong||0}</td><td class="num">${x.blank||0}</td><td class="num"><b>${Number(x.officialScore||0).toFixed(2)}</b></td></tr>`).join(''):'<tr><td colspan="8">Todavía no hay repasos por tema finalizados.</td></tr>';
 }
 
 
@@ -455,28 +491,15 @@ function reviewReserveCandidates(ordinaryIds){
 }
 function ensureReviewReserves(){
  if(!state.current?.reviewTest)return;
- if(state.current.reserveMigration==='SAME_TOPICS_V2')return;
- const original=(state.current.ids||[]).slice(0,100);
- // Migración deliberada: las reservas de versiones anteriores se descartan
- // y se crean de nuevo a partir de los mismos PARTE+TEMA de las 100 ordinarias.
- // Las 100 preguntas y sus respuestas permanecen intactas.
- const candidates=shuffle(reviewReserveCandidates(original));
- const reserves=candidates.slice(0,5);
- const oldReserveIds=new Set(Array.isArray(state.current.reserveIds)?state.current.reserveIds:[]);
- // Limpiamos solo respuestas/marcas de las reservas antiguas; nunca las 100 ordinarias.
- oldReserveIds.forEach(id=>{
-   if(!original.includes(id)){
-     if(state.current.answers)delete state.current.answers[id];
-     if(state.current.flags)delete state.current.flags[id];
-   }
- });
- state.current.reserveIds=reserves.map(q=>q.id);
- state.current.ids=[...original,...state.current.reserveIds];
- state.current.reviewOrdinaryCount=100;
- state.current.reviewReserveCount=state.current.reserveIds.length;
- state.current.reviewLimitSeconds=10800;
- state.current.reserveMigration='SAME_TOPICS_V2';
- saveState();
+ const ordinaryN=state.current.reviewOrdinaryCount||100;
+ const original=(state.current.ids||[]).slice(0,ordinaryN);
+ if(state.current.reserveMigration==='SAME_TOPICS_V3')return;
+ const candidates=shuffle(reviewReserveCandidates(original)),reserves=candidates.slice(0,5);
+ const old=new Set(Array.isArray(state.current.reserveIds)?state.current.reserveIds:[]);
+ old.forEach(id=>{if(!original.includes(id)){if(state.current.answers)delete state.current.answers[id];if(state.current.flags)delete state.current.flags[id]}});
+ state.current.reserveIds=reserves.map(q=>q.id);state.current.ids=[...original,...state.current.reserveIds];
+ state.current.reviewReserveCount=state.current.reserveIds.length;state.current.reviewLimitSeconds=10800;
+ state.current.reviewKind=state.current.reviewKind||'SIMULACRO';state.current.reserveMigration='SAME_TOPICS_V3';saveState();
 }
 function renderTest(qs,answers={},flags={},resuming=false){
   if(!qs.length){test.innerHTML='<div class="result">No hay preguntas con esos filtros.</div>';return}
@@ -526,30 +549,38 @@ function gradeTest(qs){
   const testNo=(state.tests||0)+1;
   const wasReview=!!state.current?.reviewTest;
   const reviewNo=wasReview?((state.history||[]).filter(h=>h.reviewTest).length+1):null;
-  const officialScore=wasReview?Math.max(0,Math.min(10,(ok-(wrong/3))/10)):null;
+  const ordinaryCount=wasReview?(state.current?.reviewOrdinaryCount||100):qs.length;
+  const reviewKind=wasReview?(state.current?.reviewKind||'SIMULACRO'):null;
+  const officialScore=wasReview?Math.max(0,Math.min(10,(10/Math.max(1,ordinaryCount))*(ok-(wrong/3)))):null;
   const histItems=qs.map((q,i)=>{const sel=test.querySelector(`.q[data-i="${i}"] input[type=radio]:checked`);return {id:q.id,answer:sel?sel.value:null,correct:!!sel&&sel.value===q.correcta}});
   state.history=Array.isArray(state.history)?state.history:[];
-  state.history.push({id:'T'+finishedAt+'-'+testNo,testNo,finishedAt,filters:state.current?.filters||{},items:histItems,reviewTest:wasReview,reviewNo,officialScore,correct:ok,wrong,blank:qs.length-answered,countsInGeneralStats:true});
+  state.history.push({id:'T'+finishedAt+'-'+testNo,testNo,finishedAt,filters:state.current?.filters||{},items:histItems,reviewTest:wasReview,reviewKind,reviewNo,reviewOrdinaryCount:ordinaryCount,reviewTopics:reviewTopicsFromItems(histItems.slice(0,ordinaryCount)),officialScore,correct:ok,wrong,blank:ordinaryCount-answered,countsInGeneralStats:true});
   state.tests=testNo;state.current=null;saveState();
   const denom=answered||qs.length;const pct=answered?Math.round(ok/answered*100):0;
-  $('score').className='result';$('score').innerHTML=wasReview?`<b>Test de repaso ${reviewNo}</b> · Nota oficial simulada: <b>${officialScore.toFixed(2)} / 10</b><div class="score-detail"><div><strong>${ok}</strong>Aciertos</div><div><strong>${wrong}</strong>Errores</div><div><strong>${qs.length-answered}</strong>Sin responder</div><div><strong>${pct}%</strong>Acierto bruto</div></div><div class="note">Fórmula aplicada: 1,2 × [A − (E/3)]. Las respuestas en blanco no penalizan.</div>`:`Resultado: ${ok} / ${answered} respondidas · ${pct}%<div class="score-detail"><div><strong>${ok}</strong>Aciertos</div><div><strong>${wrong}</strong>Errores</div><div><strong>${qs.length-answered}</strong>Sin responder</div><div><strong>${flaggedNow}</strong>Movidas fuera</div></div>`;
+  $('score').className='result';$('score').innerHTML=wasReview?`<b>Test de repaso ${reviewNo}</b> · Nota oficial simulada: <b>${officialScore.toFixed(2)} / 10</b><div class="score-detail"><div><strong>${ok}</strong>Aciertos</div><div><strong>${wrong}</strong>Errores</div><div><strong>${qs.length-answered}</strong>Sin responder</div><div><strong>${pct}%</strong>Acierto bruto</div></div><div class="note">Fórmula aplicada: [A − (E/3)] / 10. Las respuestas en blanco no penalizan.</div>`:`Resultado: ${ok} / ${answered} respondidas · ${pct}%<div class="score-detail"><div><strong>${ok}</strong>Aciertos</div><div><strong>${wrong}</strong>Errores</div><div><strong>${qs.length-answered}</strong>Sin responder</div><div><strong>${flaggedNow}</strong>Movidas fuera</div></div>`;
   refillTema();refillOthers();updateDashboard();
 }
 $('generate').onclick=()=>{
   if(isReviewMode()){
-    const pool=[...filtered()];
+    const pool=[...filtered()], selectedKeys=reviewSelectedTopicKeys();
+    if(isTopicReviewMode()){
+      let count=n.value==='ALL'?pool.length:Math.max(1,Math.min(Number(n.value)||20,pool.length));
+      const qs=balancedTake(pool,count,selectedKeys);
+      if(!qs.length){test.innerHTML='<div class="result">No hay preguntas disponibles para los temas seleccionados.</div>';return}
+      const reserves=shuffle(reviewReserveCandidates(qs.map(q=>q.id))).filter(q=>selectedKeys.includes(themeKey(q))).slice(0,5);
+      state.current={ids:[...qs.map(q=>q.id),...reserves.map(q=>q.id)],reserveIds:reserves.map(q=>q.id),reviewOrdinaryCount:qs.length,reviewReserveCount:reserves.length,answers:{},flags:{},filters:{...currentFilters()},startedAt:Date.now(),reviewTest:true,reviewKind:'TEMA',reviewScoreScale:10,reviewStartedAt:Date.now(),reviewLimitSeconds:10800,reviewTimeExpired:false,reserveMigration:'SAME_TOPICS_V3'};
+      saveState();renderTest([...qs,...reserves]);return;
+    }
     const common=pool.filter(q=>String(effectivePart(q)).toUpperCase()==='COMÚN');
     const specific=pool.filter(q=>['ESPECÍFICO','EDISUR'].includes(String(effectivePart(q)).toUpperCase()));
     if(common.length<30){test.innerHTML=`<div class="result">Con los filtros elegidos solo hay ${common.length} preguntas comunes. Necesitas al menos 30.</div>`;return}
     if(specific.length<70){test.innerHTML=`<div class="result">Con los filtros elegidos solo hay ${specific.length} preguntas específicas/EDISUR. Necesitas al menos 70.</div>`;return}
     const qsCommon=shuffle(common).slice(0,30);
     const qsSpecific=shuffle(specific).slice(0,70);
-    // Simulacro C1.2100: conservar bloques como en examen: primero COMÚN y después ESPECÍFICO.
-    // Se aleatoriza dentro de cada bloque, nunca entre ambos.
     const qs=[...qsCommon,...qsSpecific];
     const reserves=shuffle(reviewReserveCandidates(qs.map(q=>q.id))).slice(0,5);
-    state.current={ids:[...qs.map(q=>q.id),...reserves.map(q=>q.id)],reserveIds:reserves.map(q=>q.id),reviewOrdinaryCount:100,reviewReserveCount:5,answers:{},flags:{},filters:{...currentFilters(),n:'100'},startedAt:Date.now(),reviewTest:true,reviewRule:'C1_LIBRE_E3_V12',reviewScoreScale:10,reviewStartedAt:Date.now(),reviewLimitSeconds:10800,reviewTimeExpired:false,reserveMigration:'SAME_TOPICS_V2'}; const fullQs=[...qs,...reserves];
-    saveState();renderTest(fullQs);return;
+    state.current={ids:[...qs.map(q=>q.id),...reserves.map(q=>q.id)],reserveIds:reserves.map(q=>q.id),reviewOrdinaryCount:100,reviewReserveCount:reserves.length,answers:{},flags:{},filters:{...currentFilters(),n:'100'},startedAt:Date.now(),reviewTest:true,reviewKind:'SIMULACRO',reviewRule:'C1_LIBRE_E3_V12',reviewScoreScale:10,reviewStartedAt:Date.now(),reviewLimitSeconds:10800,reviewTimeExpired:false,reserveMigration:'SAME_TOPICS_V3'};
+    saveState();renderTest([...qs,...reserves]);return;
   }
   let pool=[...filtered()];
   if(n.value==='ALL')pool.sort((a,b)=>yearKey(b)-yearKey(a)||String(b.anio||'').localeCompare(String(a.anio||''))||(Number(a.numero_original_verificado)||9999)-(Number(b.numero_original_verificado)||9999));
