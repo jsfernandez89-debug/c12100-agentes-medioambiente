@@ -155,6 +155,8 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
 .review-tag button{border:0;background:transparent;padding:0;cursor:pointer;font-size:13px;line-height:1}
 @media(max-width:850px){.review-dropdown-config{grid-template-columns:1fr}}
 
+
+.topic-summary-row{cursor:pointer}.topic-summary-row:hover td{background:#f7faf7}.topic-summary-row td:first-child{font-weight:800;color:#214d3a}.topic-detail-row td{padding:0!important;background:#fbfdfb}.topic-detail-box{padding:10px 14px 14px}.topic-detail-table{width:100%;border-collapse:collapse;font-size:11px}.topic-detail-table th,.topic-detail-table td{padding:7px 8px;border-bottom:1px solid #e6ede8;text-align:left}.topic-detail-table .num{text-align:right}.topic-origin{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:999px;background:#edf5ef;border:1px solid #d7e6dc;font-size:9.5px;font-weight:800}.trend-up{color:#267047;font-weight:800}.trend-down{color:#a74435;font-weight:800}.trend-flat{color:#6d7b73;font-weight:800}
 </style></head><body><header class="hero">
   <div class="hero-inner">
     <div>
@@ -164,7 +166,7 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
     </div>
     <div class="hero-badge"><strong>7.742</strong><span>preguntas utilizables · banco definitivo auditado</span></div>
   </div>
-</header><main><div class="release-bar"><span class="release-dot"></span><strong>Versión PRO Cloud · test individual 10 real · cálculo /10 corregido · simulacro 30+70</strong><span>7.742 preguntas utilizables</span><span>Últimos cuerpos: A1.9200 · B1.3000</span><span>Nube · historial · falladas · reanudación · revisión temática</span></div>
+</header><main><div class="release-bar"><span class="release-dot"></span><strong>Versión PRO Cloud · estadísticas individuales agrupadas por tema · histórico corregido · simulacro 30+70</strong><span>7.742 preguntas utilizables</span><span>Últimos cuerpos: A1.9200 · B1.3000</span><span>Nube · historial · falladas · reanudación · revisión temática</span></div>
 <div class="card cloud-card" id="cloudCard"><div class="cloud-head"><div><h2>☁️ Sincronización multidispositivo</h2><p>Inicia sesión una vez y tu test en curso, estadísticas, preguntas falladas y revisiones se mantendrán sincronizados entre trabajo, casa y otros dispositivos.</p></div><div class="cloud-badge"><span class="sync-dot" id="syncDot"></span><span id="syncStatus">Modo local</span></div></div><div class="cloud-auth" id="cloudAuth"><div><label>Correo electrónico</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="tu@email.com"></div><div><label>Contraseña de la app</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></div><button id="cloudLogin">Entrar</button><button class="secondary" id="cloudSignup">Crear cuenta</button></div><div class="cloud-session" id="cloudSession"><div class="cloud-user-line"><div class="cloud-user"><strong id="cloudUserEmail">Usuario</strong><br><span id="cloudLastSync" class="cloud-last">Sin sincronizaciones todavía</span></div><div class="cloud-actions"><button class="secondary" id="cloudSyncNow">Sincronizar ahora</button><button class="secondary" id="cloudPull">Cargar desde nube</button><button class="secondary" id="cloudPush">Subir este dispositivo</button><button class="secondary danger" id="cloudLogout">Cerrar sesión</button></div></div></div><div class="cloud-message" id="cloudMessage"></div><div class="cloud-help"><b>Copia local + nube:</b> si no hay Internet, la app sigue guardando en este navegador y sincroniza cuando vuelve la conexión. La contraseña nunca se guarda en la aplicación.</div></div>
 <div class="card controls-card"><div class="section-title"><h2>Configura tu test</h2><span>Combina libremente varias partes, temas, cuerpos y convocatorias</span></div><div class="grid">
 <div><label>Parte <span class="multi-hint">(varias)</span></label><select id="parte" class="multi-source" multiple aria-hidden="true"><option value="ALL" selected>Todas</option><option value="REPASO">TEST DE REPASO</option><option>COMÚN</option><option>ESPECÍFICO</option><option>FUERA DE TEMARIO</option><option>EDISUR</option><option>BLOQUES DE ESTUDIO</option></select><div class="multi-picker" data-for="parte"></div></div>
@@ -183,9 +185,10 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
  <h3 style="margin:12px 0 8px">Simulacros · 30 Común + 70 Específico/EDISUR</h3>
  <div class="review-kpis"><div class="review-kpi"><strong id="reviewCount">0</strong><span>Simulacros</span></div><div class="review-kpi"><strong id="reviewAvg">—</strong><span>Nota media /10</span></div><div class="review-kpi"><strong id="reviewLast">—</strong><span>Última nota /10</span></div><div class="review-kpi"><strong id="reviewBest">—</strong><span>Mejor nota /10</span></div></div>
  <div style="overflow:auto"><table class="review-table"><thead><tr><th>Test</th><th>Fecha</th><th>Temas incluidos</th><th class="num">Aciertos</th><th class="num">Errores</th><th class="num">Blanco</th><th class="num">Nota /10</th></tr></thead><tbody id="reviewHistory"><tr><td colspan="7">Todavía no hay simulacros finalizados.</td></tr></tbody></table></div>
- <h3 style="margin:22px 0 8px">Repasos por un tema individual</h3>
+ <h3 style="margin:22px 0 8px">Repasos por tema individual</h3>
  <div class="review-kpis"><div class="review-kpi"><strong id="topicReviewCount">0</strong><span>Tests por tema</span></div><div class="review-kpi"><strong id="topicReviewAvg">—</strong><span>Nota media /10</span></div><div class="review-kpi"><strong id="topicReviewLast">—</strong><span>Última nota /10</span></div><div class="review-kpi"><strong id="topicReviewBest">—</strong><span>Mejor nota /10</span></div></div>
- <div style="overflow:auto"><table class="review-table"><thead><tr><th>Test</th><th>Fecha</th><th>Tema</th><th class="num">Preguntas</th><th class="num">Aciertos</th><th class="num">Errores</th><th class="num">Blanco</th><th class="num">Nota /10</th></tr></thead><tbody id="topicReviewHistory"><tr><td colspan="8">Todavía no hay repasos por tema finalizados.</td></tr></tbody></table></div>
+ <div class="note" style="margin:5px 0 10px">Los repasos individuales se agrupan por tema. Pulsa un tema para desplegar todos los test realizados, sus notas y la evolución. Si un tema contiene preguntas de Específico y EDISUR, se indica dentro del desplegable.</div>
+ <div style="overflow:auto"><table class="review-table"><thead><tr><th>Tema</th><th class="num">Tests</th><th class="num">Media /10</th><th class="num">Última</th><th class="num">Mejor</th><th>Progreso</th></tr></thead><tbody id="topicReviewHistory"><tr><td colspan="6">Todavía no hay repasos por tema finalizados.</td></tr></tbody></table></div>
 </div>
 
 <div id="reviewTimerBox" style="display:none;margin:0 0 12px;padding:12px 16px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-weight:700">
@@ -207,11 +210,20 @@ let state=loadState();
  let changed=false;
  (state.history||[]).forEach(x=>{
   if(!x||!x.reviewTest)return;
-  if(Number.isFinite(Number(x.correct))&&Number.isFinite(Number(x.wrong))){
-   const ordinaryN=Number(x.reviewOrdinaryCount)||((x.reviewKind==='SIMULACRO'||!x.reviewKind)?100:Math.max(1,(x.items||[]).length));
-   const s=Math.max(0,Math.min(10,(10/ordinaryN)*(Number(x.correct)-(Number(x.wrong)/3))));
-   if(Number(x.officialScore)!==s){x.officialScore=s;changed=true}
-  }else if(Number(x.officialScore)>10){x.officialScore=Number(x.officialScore)/12;changed=true}
+  const kind=x.reviewKind||null;
+  if(kind==='TEMA'&&Array.isArray(x.items)&&x.items.length){
+    const ordinaryN=Math.max(1,Math.min(Number(x.reviewOrdinaryCount)||x.items.length,x.items.length));
+    const ordinary=x.items.slice(0,ordinaryN);
+    const ok=ordinary.filter(it=>it&&it.answer!=null&&it.correct===true).length;
+    const wrong=ordinary.filter(it=>it&&it.answer!=null&&it.correct!==true).length;
+    const blank=ordinaryN-ok-wrong;
+    const score=Math.max(0,Math.min(10,(10/ordinaryN)*(ok-(wrong/3))));
+    if(x.correct!==ok||x.wrong!==wrong||x.blank!==blank||Number(x.officialScore)!==score||x.reviewOrdinaryCount!==ordinaryN){x.correct=ok;x.wrong=wrong;x.blank=blank;x.officialScore=score;x.reviewOrdinaryCount=ordinaryN;changed=true}
+  }else if(Number.isFinite(Number(x.correct))&&Number.isFinite(Number(x.wrong))){
+    const ordinaryN=Number(x.reviewOrdinaryCount)||100;
+    const score=Math.max(0,Math.min(10,(10/ordinaryN)*(Number(x.correct)-(Number(x.wrong)/3))));
+    if(Number(x.officialScore)!==score){x.officialScore=score;changed=true}
+  }
  });
  if(state.current?.reviewTest)state.current.reviewScoreScale=10;
  if(changed||state.current?.reviewTest){state._updatedAt=Date.now();localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
@@ -440,16 +452,30 @@ function balancedTake(pool,count,selectedKeys){
  }
  return out;
 }
+function topicGroupInfo(x){
+ const ordinary=(x.items||[]).slice(0,x.reviewOrdinaryCount||x.items?.length||0), qs=ordinary.map(it=>qById(it.id)).filter(Boolean);
+ const q=qs[0]; if(!q)return {key:'SIN|?',label:'Tema sin identificar',origins:[]};
+ const p=String(effectivePart(q)||'').toUpperCase(), t=String(effectiveTema(q)||q.tema||'?');
+ const family=p==='COMÚN'?'COMÚN':'ESPECÍFICO';
+ const origins=[...new Set(qs.map(z=>String(effectivePart(z)||'').toUpperCase()).filter(z=>z==='EDISUR'||z==='ESPECÍFICO'||z==='COMÚN'))];
+ return {key:`${family}|${t}`,label:`${family==='COMÚN'?'Común':'Específico'} · Tema ${t}`,origins};
+}
 function reviewHistoryRows(){
  const all=(state.history||[]).filter(h=>h.reviewTest).sort((a,b)=>Number(b.finishedAt||0)-Number(a.finishedAt||0));
  const sims=all.filter(h=>inferReviewKind(h)==='SIMULACRO'), topics=all.filter(h=>inferReviewKind(h)==='TEMA');
- function fillKpis(arr,prefix){
-  const scores=arr.map(h=>Number(h.officialScore)).filter(Number.isFinite);
-  $(prefix+'Count').textContent=arr.length;$(prefix+'Avg').textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2):'—';$(prefix+'Last').textContent=scores.length?scores[0].toFixed(2):'—';$(prefix+'Best').textContent=scores.length?Math.max(...scores).toFixed(2):'—';
- }
+ function fillKpis(arr,prefix){const scores=arr.map(h=>Number(h.officialScore)).filter(Number.isFinite);$(prefix+'Count').textContent=arr.length;$(prefix+'Avg').textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2):'—';$(prefix+'Last').textContent=scores.length?scores[0].toFixed(2):'—';$(prefix+'Best').textContent=scores.length?Math.max(...scores).toFixed(2):'—'}
  fillKpis(sims,'review');fillKpis(topics,'topicReview');
  $('reviewHistory').innerHTML=sims.length?sims.map((x,i)=>`<tr><td>Simulacro ${x.reviewNo||sims.length-i}</td><td>${x.finishedAt?new Date(x.finishedAt).toLocaleString():'—'}</td><td>${reviewTopicsFromItems((x.items||[]).slice(0,x.reviewOrdinaryCount||100))}</td><td class="num">${x.correct||0}</td><td class="num">${x.wrong||0}</td><td class="num">${x.blank||0}</td><td class="num"><b>${Number(x.officialScore||0).toFixed(2)}</b></td></tr>`).join(''):'<tr><td colspan="7">Todavía no hay simulacros finalizados.</td></tr>';
- $('topicReviewHistory').innerHTML=topics.length?topics.map((x,i)=>`<tr><td>Repaso ${x.reviewNo||topics.length-i}</td><td>${x.finishedAt?new Date(x.finishedAt).toLocaleString():'—'}</td><td>${reviewTopicsFromItems((x.items||[]).slice(0,x.reviewOrdinaryCount||x.items?.length||0))}</td><td class="num">${x.reviewOrdinaryCount||x.items?.length||0}</td><td class="num">${x.correct||0}</td><td class="num">${x.wrong||0}</td><td class="num">${x.blank||0}</td><td class="num"><b>${Number(x.officialScore||0).toFixed(2)}</b></td></tr>`).join(''):'<tr><td colspan="8">Todavía no hay repasos por tema finalizados.</td></tr>';
+ if(!topics.length){$('topicReviewHistory').innerHTML='<tr><td colspan="6">Todavía no hay repasos por tema finalizados.</td></tr>';return}
+ const groups=new Map(); topics.forEach(x=>{const info=topicGroupInfo(x);if(!groups.has(info.key))groups.set(info.key,{...info,tests:[]});const g=groups.get(info.key);g.tests.push(x);info.origins.forEach(o=>{if(!g.origins.includes(o))g.origins.push(o)})});
+ const ordered=[...groups.values()].sort((a,b)=>{const [pa,ta]=a.key.split('|'),[pb,tb]=b.key.split('|');if(pa!==pb)return pa==='COMÚN'?-1:1;return (Number(ta)||999)-(Number(tb)||999)});
+ $('topicReviewHistory').innerHTML=ordered.map((g,gi)=>{
+   const ts=[...g.tests].sort((a,b)=>Number(a.finishedAt||0)-Number(b.finishedAt||0)), scores=ts.map(x=>Number(x.officialScore)||0), avg=scores.reduce((a,b)=>a+b,0)/scores.length,last=scores.at(-1),best=Math.max(...scores),first=scores[0];
+   const delta=last-first, trend=ts.length<2?'1 test':delta>0.004?`▲ +${delta.toFixed(2)}`:delta<-.004?`▼ ${delta.toFixed(2)}`:'→ estable',trendClass=delta>0.004?'trend-up':delta<-.004?'trend-down':'trend-flat';
+   const detail=[...ts].reverse().map((x,i)=>{const info=topicGroupInfo(x),orig=info.origins.map(o=>`<span class="topic-origin">${o==='EDISUR'?'EDISUR':o==='ESPECÍFICO'?'Específico':'Común'}</span>`).join('');return `<tr><td>${x.finishedAt?new Date(x.finishedAt).toLocaleString():'—'}</td><td>${orig||'—'}</td><td class="num">${x.reviewOrdinaryCount||x.items?.length||0}</td><td class="num">${x.correct||0}</td><td class="num">${x.wrong||0}</td><td class="num">${x.blank||0}</td><td class="num"><b>${Number(x.officialScore||0).toFixed(2)}</b></td></tr>`}).join('');
+   return `<tr class="topic-summary-row" data-topic-group="${gi}"><td><span class="theme-toggle">▸</span>${g.label}${g.origins.includes('EDISUR')&&g.origins.includes('ESPECÍFICO')?' <span class="topic-origin">Específico + EDISUR</span>':''}</td><td class="num">${ts.length}</td><td class="num"><b>${avg.toFixed(2)}</b></td><td class="num">${last.toFixed(2)}</td><td class="num">${best.toFixed(2)}</td><td class="${trendClass}">${trend}</td></tr><tr class="topic-detail-row" data-topic-detail="${gi}" style="display:none"><td colspan="6"><div class="topic-detail-box"><table class="topic-detail-table"><thead><tr><th>Fecha</th><th>Procedencia</th><th class="num">Preguntas</th><th class="num">Aciertos</th><th class="num">Errores</th><th class="num">Blanco</th><th class="num">Nota /10</th></tr></thead><tbody>${detail}</tbody></table></div></td></tr>`;
+ }).join('');
+ $('topicReviewHistory').querySelectorAll('.topic-summary-row').forEach(row=>row.onclick=()=>{const id=row.dataset.topicGroup,d=$('topicReviewHistory').querySelector(`[data-topic-detail="${id}"]`),open=d.style.display!=='none';d.style.display=open?'none':'table-row';row.querySelector('.theme-toggle').textContent=open?'▸':'▾'});
 }
 
 
@@ -543,7 +569,7 @@ function renderTest(qs,answers={},flags={},resuming=false){
 }
 function updateProgress(qs){let answered=0;qs.forEach((q,i)=>{if(test.querySelector(`.q[data-i="${i}"] input[type=radio]:checked`))answered++});const pct=qs.length?answered/qs.length*100:0;if($('progressText'))$('progressText').textContent=`${answered} / ${qs.length} respondidas`;if($('progressFill'))$('progressFill').style.width=pct+'%'}
 function gradeTest(qs){
-  if(state.current?.reviewTest)qs=qs.slice(0,100);
+  if(state.current?.reviewTest)qs=qs.slice(0,state.current?.reviewOrdinaryCount||100);
   stopReviewTimer();
   if($('reviewTimerBox'))$('reviewTimerBox').style.display='none';
   let ok=0,wrong=0,answered=0,flaggedNow=0;
