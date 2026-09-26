@@ -164,7 +164,7 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
     </div>
     <div class="hero-badge"><strong>7.742</strong><span>preguntas utilizables · banco definitivo auditado</span></div>
   </div>
-</header><main><div class="release-bar"><span class="release-dot"></span><strong>Versión PRO Cloud reparada · 180 min · 100 + 5 reserva · reanudación y nube corregidas</strong><span>7.742 preguntas utilizables</span><span>Últimos cuerpos: A1.9200 · B1.3000</span><span>Nube · historial · falladas · reanudación · revisión temática</span></div>
+</header><main><div class="release-bar"><span class="release-dot"></span><strong>Versión PRO Cloud · migración del test actual · reservas 101–105 corregidas</strong><span>7.742 preguntas utilizables</span><span>Últimos cuerpos: A1.9200 · B1.3000</span><span>Nube · historial · falladas · reanudación · revisión temática</span></div>
 <div class="card cloud-card" id="cloudCard"><div class="cloud-head"><div><h2>☁️ Sincronización multidispositivo</h2><p>Inicia sesión una vez y tu test en curso, estadísticas, preguntas falladas y revisiones se mantendrán sincronizados entre trabajo, casa y otros dispositivos.</p></div><div class="cloud-badge"><span class="sync-dot" id="syncDot"></span><span id="syncStatus">Modo local</span></div></div><div class="cloud-auth" id="cloudAuth"><div><label>Correo electrónico</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="tu@email.com"></div><div><label>Contraseña de la app</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></div><button id="cloudLogin">Entrar</button><button class="secondary" id="cloudSignup">Crear cuenta</button></div><div class="cloud-session" id="cloudSession"><div class="cloud-user-line"><div class="cloud-user"><strong id="cloudUserEmail">Usuario</strong><br><span id="cloudLastSync" class="cloud-last">Sin sincronizaciones todavía</span></div><div class="cloud-actions"><button class="secondary" id="cloudSyncNow">Sincronizar ahora</button><button class="secondary" id="cloudPull">Cargar desde nube</button><button class="secondary" id="cloudPush">Subir este dispositivo</button><button class="secondary danger" id="cloudLogout">Cerrar sesión</button></div></div></div><div class="cloud-message" id="cloudMessage"></div><div class="cloud-help"><b>Copia local + nube:</b> si no hay Internet, la app sigue guardando en este navegador y sincroniza cuando vuelve la conexión. La contraseña nunca se guarda en la aplicación.</div></div>
 <div class="card controls-card"><div class="section-title"><h2>Configura tu test</h2><span>Combina libremente varias partes, temas, cuerpos y convocatorias</span></div><div class="grid">
 <div><label>Parte <span class="multi-hint">(varias)</span></label><select id="parte" class="multi-source" multiple aria-hidden="true"><option value="ALL" selected>Todas</option><option value="REPASO">TEST DE REPASO</option><option>COMÚN</option><option>ESPECÍFICO</option><option>FUERA DE TEMARIO</option><option>EDISUR</option><option>BLOQUES DE ESTUDIO</option></select><div class="multi-picker" data-for="parte"></div></div>
@@ -431,30 +431,40 @@ function startReviewTimer(){
   else lockReviewAnswers();
 }
 
+function reviewReserveCandidates(ordinaryIds){
+ const ordinary=ordinaryIds.map(qById).filter(Boolean),used=new Set(ordinaryIds);
+ const allowed=new Set(ordinary.map(q=>`${effectivePart(q)}|${String(q.tema??'')}`));
+ return QUESTIONS.filter(q=>{
+  if(!q||used.has(q.id))return false;
+  const p=String(effectivePart(q)||'').toUpperCase();
+  if(p==='FUERA DE TEMARIO'||p==='BLOQUES DE ESTUDIO')return false;
+  return allowed.has(`${effectivePart(q)}|${String(q.tema??'')}`);
+ });
+}
 function ensureReviewReserves(){
-  if(!state.current?.reviewTest)return;
-  const original=(state.current.ids||[]).slice(0,100);
-  const used=new Set(original);
-  let reserves=Array.isArray(state.current.reserveIds)?state.current.reserveIds.filter(id=>!used.has(id)&&qById(id)):[];
-
-  // Migración rápida: recorrer la base una sola vez y parar al llegar a 5.
-  // No barajar/copiar las ~10.000 preguntas al pulsar "Reanudar".
-  if(reserves.length<5){
-    const already=new Set(reserves);
-    for(let i=0;i<QUESTIONS.length && reserves.length<5;i++){
-      const q=QUESTIONS[i];
-      if(q && !used.has(q.id) && !already.has(q.id)){
-        reserves.push(q.id); already.add(q.id);
-      }
-    }
-  }
-
-  state.current.reserveIds=reserves.slice(0,5);
-  state.current.ids=[...original,...state.current.reserveIds];
-  state.current.reviewOrdinaryCount=100;
-  state.current.reviewReserveCount=5;
-  state.current.reviewLimitSeconds=10800;
-  saveState();
+ if(!state.current?.reviewTest)return;
+ if(state.current.reserveMigration==='SAME_TOPICS_V2')return;
+ const original=(state.current.ids||[]).slice(0,100);
+ // Migración deliberada: las reservas de versiones anteriores se descartan
+ // y se crean de nuevo a partir de los mismos PARTE+TEMA de las 100 ordinarias.
+ // Las 100 preguntas y sus respuestas permanecen intactas.
+ const candidates=shuffle(reviewReserveCandidates(original));
+ const reserves=candidates.slice(0,5);
+ const oldReserveIds=new Set(Array.isArray(state.current.reserveIds)?state.current.reserveIds:[]);
+ // Limpiamos solo respuestas/marcas de las reservas antiguas; nunca las 100 ordinarias.
+ oldReserveIds.forEach(id=>{
+   if(!original.includes(id)){
+     if(state.current.answers)delete state.current.answers[id];
+     if(state.current.flags)delete state.current.flags[id];
+   }
+ });
+ state.current.reserveIds=reserves.map(q=>q.id);
+ state.current.ids=[...original,...state.current.reserveIds];
+ state.current.reviewOrdinaryCount=100;
+ state.current.reviewReserveCount=state.current.reserveIds.length;
+ state.current.reviewLimitSeconds=10800;
+ state.current.reserveMigration='SAME_TOPICS_V2';
+ saveState();
 }
 function renderTest(qs,answers={},flags={},resuming=false){
   if(!qs.length){test.innerHTML='<div class="result">No hay preguntas con esos filtros.</div>';return}
@@ -525,8 +535,8 @@ $('generate').onclick=()=>{
     // Simulacro C1.2100: conservar bloques como en examen: primero COMÚN y después ESPECÍFICO.
     // Se aleatoriza dentro de cada bloque, nunca entre ambos.
     const qs=[...qsCommon,...qsSpecific];
-    const used=new Set(qs.map(q=>q.id)); const reserves=shuffle(QUESTIONS.filter(q=>!used.has(q.id))).slice(0,5);
-    state.current={ids:[...qs.map(q=>q.id),...reserves.map(q=>q.id)],reserveIds:reserves.map(q=>q.id),reviewOrdinaryCount:100,reviewReserveCount:5,answers:{},flags:{},filters:{...currentFilters(),n:'100'},startedAt:Date.now(),reviewTest:true,reviewRule:'C1_LIBRE_E3_V12',reviewStartedAt:Date.now(),reviewLimitSeconds:10800,reviewTimeExpired:false}; const fullQs=[...qs,...reserves];
+    const reserves=shuffle(reviewReserveCandidates(qs.map(q=>q.id))).slice(0,5);
+    state.current={ids:[...qs.map(q=>q.id),...reserves.map(q=>q.id)],reserveIds:reserves.map(q=>q.id),reviewOrdinaryCount:100,reviewReserveCount:5,answers:{},flags:{},filters:{...currentFilters(),n:'100'},startedAt:Date.now(),reviewTest:true,reviewRule:'C1_LIBRE_E3_V12',reviewStartedAt:Date.now(),reviewLimitSeconds:10800,reviewTimeExpired:false,reserveMigration:'SAME_TOPICS_V2'}; const fullQs=[...qs,...reserves];
     saveState();renderTest(fullQs);return;
   }
   let pool=[...filtered()];
