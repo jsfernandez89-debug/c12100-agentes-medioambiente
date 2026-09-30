@@ -166,7 +166,7 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
     </div>
     <div class="hero-badge"><strong>7.742</strong><span>preguntas utilizables · banco definitivo auditado</span></div>
   </div>
-</header><main><div class="release-bar"><span class="release-dot"></span><strong>Versión PRO Cloud · estadísticas individuales agrupadas por tema · histórico corregido · simulacro 30+70</strong><span>7.742 preguntas utilizables</span><span>Últimos cuerpos: A1.9200 · B1.3000</span><span>Nube · historial · falladas · reanudación · revisión temática</span></div>
+</header><main><div class="release-bar"><span class="release-dot"></span><strong>Versión PRO Cloud · reanudación corregida · cronómetro pausado al cerrar · nube segura</strong><span>7.742 preguntas utilizables</span><span>Últimos cuerpos: A1.9200 · B1.3000</span><span>Nube · historial · falladas · reanudación · revisión temática</span></div>
 <div class="card cloud-card" id="cloudCard"><div class="cloud-head"><div><h2>☁️ Sincronización multidispositivo</h2><p>Inicia sesión una vez y tu test en curso, estadísticas, preguntas falladas y revisiones se mantendrán sincronizados entre trabajo, casa y otros dispositivos.</p></div><div class="cloud-badge"><span class="sync-dot" id="syncDot"></span><span id="syncStatus">Modo local</span></div></div><div class="cloud-auth" id="cloudAuth"><div><label>Correo electrónico</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="tu@email.com"></div><div><label>Contraseña de la app</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></div><button id="cloudLogin">Entrar</button><button class="secondary" id="cloudSignup">Crear cuenta</button></div><div class="cloud-session" id="cloudSession"><div class="cloud-user-line"><div class="cloud-user"><strong id="cloudUserEmail">Usuario</strong><br><span id="cloudLastSync" class="cloud-last">Sin sincronizaciones todavía</span></div><div class="cloud-actions"><button class="secondary" id="cloudSyncNow">Sincronizar ahora</button><button class="secondary" id="cloudPull">Cargar desde nube</button><button class="secondary" id="cloudPush">Subir este dispositivo</button><button class="secondary danger" id="cloudLogout">Cerrar sesión</button></div></div></div><div class="cloud-message" id="cloudMessage"></div><div class="cloud-help"><b>Copia local + nube:</b> si no hay Internet, la app sigue guardando en este navegador y sincroniza cuando vuelve la conexión. La contraseña nunca se guarda en la aplicación.</div></div>
 <div class="card controls-card"><div class="section-title"><h2>Configura tu test</h2><span>Combina libremente varias partes, temas, cuerpos y convocatorias</span></div><div class="grid">
 <div><label>Parte <span class="multi-hint">(varias)</span></label><select id="parte" class="multi-source" multiple aria-hidden="true"><option value="ALL" selected>Todas</option><option value="REPASO">TEST DE REPASO</option><option>COMÚN</option><option>ESPECÍFICO</option><option>FUERA DE TEMARIO</option><option>EDISUR</option><option>BLOQUES DE ESTUDIO</option></select><div class="multi-picker" data-for="parte"></div></div>
@@ -270,7 +270,15 @@ function mergeProgressStates(localState,remoteState){
   Object.keys(failed).forEach(id=>{const st=stats[id];if(st && Number(st.w||0)===0) delete failed[id]});
   const flagged={...(R.flagged||{}),...(L.flagged||{})};
   const ltime=Number(L._updatedAt||0),rtime=Number(R._updatedAt||0);
-  const current=(ltime>=rtime?(L.current||null):(R.current||null));
+  const lc=L.current?.ids?.length?L.current:null,rc=R.current?.ids?.length?R.current:null;
+  let current=null;
+  if(lc&&!rc)current=lc;
+  else if(rc&&!lc)current=rc;
+  else if(lc&&rc){
+    const la=Number(lc.lastActiveAt||lc.startedAt||0),ra=Number(rc.lastActiveAt||rc.startedAt||0);
+    if(la!==ra)current=la>=ra?lc:rc;
+    else current=Object.keys(lc.answers||{}).length>=Object.keys(rc.answers||{}).length?lc:rc;
+  }
   const historyMap=new Map();
   [...(R.history||[]),...(L.history||[])].forEach(h=>{if(h&&h.id)historyMap.set(h.id,h)});
   const history=[...historyMap.values()].sort((a,b)=>Number(a.finishedAt||0)-Number(b.finishedAt||0));
@@ -482,30 +490,40 @@ function reviewHistoryRows(){
 let reviewTimerHandle=null;
 function stopReviewTimer(){if(reviewTimerHandle){clearInterval(reviewTimerHandle);reviewTimerHandle=null}}
 function fmtReviewTime(s){s=Math.max(0,Math.floor(s));return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`}
-function lockReviewAnswers(){
-  test.querySelectorAll('input[type=radio]').forEach(x=>x.disabled=true);
+function lockReviewAnswers(){test.querySelectorAll('input[type=radio]').forEach(x=>x.disabled=true)}
+function migrateReviewTimerToPauseMode(){
+ const c=state.current;if(!c?.reviewTest||c.reviewTimerMode==='PAUSE_V1')return;
+ // Los tests iniciados con la versión antigua quedan recuperables. No contamos las horas con la app cerrada.
+ c.reviewRemainingSeconds=Number.isFinite(Number(c.reviewRemainingSeconds))?Number(c.reviewRemainingSeconds):10800;
+ c.reviewTimeExpired=false;c.reviewTimerMode='PAUSE_V1';c.reviewActiveSince=null;c.lastActiveAt=Date.now();persistLocal();
+}
+function pauseReviewTimer(){
+ const c=state.current;if(!c?.reviewTest||c.reviewTimerMode!=='PAUSE_V1')return;
+ if(c.reviewActiveSince){
+   const spent=Math.max(0,Math.floor((Date.now()-Number(c.reviewActiveSince))/1000));
+   c.reviewRemainingSeconds=Math.max(0,Number(c.reviewRemainingSeconds??10800)-spent);
+ }
+ c.reviewActiveSince=null;c.lastActiveAt=Date.now();
+ if(c.reviewRemainingSeconds<=0)c.reviewTimeExpired=true;
+ stopReviewTimer();persistLocal();if(!suppressCloudPush)scheduleCloudSync();
 }
 function startReviewTimer(){
-  stopReviewTimer();
-  const box=$('reviewTimerBox'),lab=$('reviewTimer'),msg=$('reviewTimerMsg');
-  if(!state.current?.reviewTest){if(box)box.style.display='none';return}
-  if(box)box.style.display='block';
-  const LIMIT=10800; // 180 minutos
-  if(!state.current.reviewStartedAt)state.current.reviewStartedAt=state.current.startedAt||Date.now();
-  state.current.reviewLimitSeconds=LIMIT;
-  const tick=()=>{
-    const left=Math.max(0,LIMIT-Math.floor((Date.now()-state.current.reviewStartedAt)/1000));
-    if(lab)lab.textContent=fmtReviewTime(left);
-    if(left<=0){
-      stopReviewTimer();state.current.reviewTimeExpired=true;saveState();lockReviewAnswers();
-      if(msg)msg.textContent=' · Tiempo agotado: respuestas bloqueadas';
-    }else if(left<=600){if(msg)msg.textContent=' · Últimos 10 minutos'}
-    else if(msg)msg.textContent='';
-  };
-  tick();saveState();
-  if(!state.current.reviewTimeExpired)reviewTimerHandle=setInterval(tick,1000);
-  else lockReviewAnswers();
+ stopReviewTimer();const box=$('reviewTimerBox'),lab=$('reviewTimer'),msg=$('reviewTimerMsg');
+ if(!state.current?.reviewTest){if(box)box.style.display='none';return}
+ migrateReviewTimerToPauseMode();const c=state.current;if(box)box.style.display='block';
+ if(c.reviewTimeExpired||Number(c.reviewRemainingSeconds)<=0){c.reviewRemainingSeconds=0;c.reviewTimeExpired=true;if(lab)lab.textContent='00:00:00';if(msg)msg.textContent=' · Tiempo agotado: respuestas bloqueadas';lockReviewAnswers();saveState();return}
+ c.reviewActiveSince=Date.now();c.lastActiveAt=Date.now();
+ const tick=()=>{
+   const spent=Math.max(0,Math.floor((Date.now()-Number(c.reviewActiveSince||Date.now()))/1000));
+   const left=Math.max(0,Number(c.reviewRemainingSeconds??10800)-spent);
+   if(lab)lab.textContent=fmtReviewTime(left);
+   if(left<=0){c.reviewRemainingSeconds=0;c.reviewActiveSince=null;c.reviewTimeExpired=true;c.lastActiveAt=Date.now();stopReviewTimer();saveState();lockReviewAnswers();if(msg)msg.textContent=' · Tiempo agotado: respuestas bloqueadas'}
+   else if(left<=600){if(msg)msg.textContent=' · Últimos 10 minutos'}else if(msg)msg.textContent='';
+ };
+ tick();persistLocal();reviewTimerHandle=setInterval(tick,1000);
 }
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseReviewTimer();else if(state.current?.reviewTest&&!state.current.reviewTimeExpired&&test.querySelector('.q'))startReviewTimer()});
+window.addEventListener('pagehide',pauseReviewTimer);
 
 function reviewReserveCandidates(ordinaryIds){
  const ordinary=ordinaryIds.map(qById).filter(Boolean),used=new Set(ordinaryIds);
@@ -543,7 +561,7 @@ function renderTest(qs,answers={},flags={},resuming=false){
     const isBlock=ep==='BLOQUES DE ESTUDIO'; const metaText=isBlock?`BLOQUES DE ESTUDIO · ${esc(q.bloque||q.tema||'')}`:`${esc(ep)}${et?` · Tema ${et} — ${esc(topicName(ep,et))}`:''} · ${esc(effectiveCuerpo(q))} · ${esc(q.anio)}`;
     return `<div class="q ${moved?'moved-out':''}" data-i="${i}" data-id="${esc(q.id)}"><div class="meta">${metaText}</div><div class="stem">${i+1}. ${esc(q.pregunta)}${state.current?.reviewTest&&i>=100?'<div style="margin-top:6px;font-size:11px;font-weight:800;color:#9a6700">PREGUNTA DE RESERVA</div>':''}</div>${q.imagen?`<img class="block-question-img" src="${q.imagen}" alt="Página original del ${esc(String(q.tema))}">`:''}${Object.entries(q.opciones||{}).map(([k,v])=>`<label class="opt"><input type="radio" name="q${i}" value="${k}" ${answers[q.id]===k?'checked':''}> <b>${k}.</b> ${esc(v)}</label>`).join('')}${isBlock?'':`<div class="review-row"><label class="review-check"><input type="checkbox" class="flag-out" ${flags[rk]||flags[q.id]||moved?'checked':''} ${moved?'disabled':''}> Quitar de este tema y mover a “Fuera de temario”</label><span class="review-tag">Revisión temática</span></div>`}</div>`
   }).join('')+`<button id="grade">Finalizar y corregir test</button><div id="score"></div>`;
-  const persist=()=>{if(!state.current)return;if(state.current.reviewTest&&state.current.reviewTimeExpired){lockReviewAnswers();return;}const ans={},fl={};qs.forEach((q,i)=>{const box=test.querySelector(`.q[data-i="${i}"]`);const sel=box?.querySelector('input[type=radio]:checked');if(sel)ans[q.id]=sel.value;const fc=box?.querySelector('.flag-out');if(fc&&fc.checked&&!isThemeFlagged(q))fl[reviewKey(q)]=true});state.current.answers=ans;state.current.flags=fl;saveState();updateProgress(qs)};
+  const persist=()=>{if(!state.current)return;if(state.current.reviewTest&&state.current.reviewTimeExpired){lockReviewAnswers();return;}const ans={},fl={};qs.forEach((q,i)=>{const box=test.querySelector(`.q[data-i="${i}"]`);const sel=box?.querySelector('input[type=radio]:checked');if(sel)ans[q.id]=sel.value;const fc=box?.querySelector('.flag-out');if(fc&&fc.checked&&!isThemeFlagged(q))fl[reviewKey(q)]=true});state.current.answers=ans;state.current.flags=fl;state.current.lastActiveAt=Date.now();saveState();updateProgress(qs)};
   // Permitir dejar una pregunta en blanco pulsando de nuevo la respuesta ya seleccionada.
   test.querySelectorAll('input[type=radio]').forEach(el=>{
     el.addEventListener('click',()=>{
@@ -604,7 +622,7 @@ $('generate').onclick=()=>{
       if(!qs.length){test.innerHTML='<div class="result">No hay preguntas disponibles para el tema seleccionado.</div>';return}
       // REPASO POR TEMA: el número elegido es el número REAL de preguntas.
       // No se añaden reservas: 10 significa exactamente 10, 15 exactamente 15, etc.
-      state.current={ids:qs.map(q=>q.id),reserveIds:[],reviewOrdinaryCount:qs.length,reviewReserveCount:0,answers:{},flags:{},filters:{...currentFilters()},startedAt:Date.now(),reviewTest:true,reviewKind:'TEMA',reviewScoreScale:10,reviewStartedAt:Date.now(),reviewLimitSeconds:10800,reviewTimeExpired:false,reserveMigration:'TOPIC_NO_RESERVES_V4'};
+      state.current={ids:qs.map(q=>q.id),reserveIds:[],reviewOrdinaryCount:qs.length,reviewReserveCount:0,answers:{},flags:{},filters:{...currentFilters()},startedAt:Date.now(),reviewTest:true,reviewKind:'TEMA',reviewScoreScale:10,reviewStartedAt:Date.now(),reviewLimitSeconds:10800,reviewRemainingSeconds:10800,reviewTimerMode:'PAUSE_V1',reviewActiveSince:null,lastActiveAt:Date.now(),reviewTimeExpired:false,reserveMigration:'TOPIC_NO_RESERVES_V4'};
       saveState();renderTest(qs);return;
     }
     const common=pool.filter(q=>String(effectivePart(q)).toUpperCase()==='COMÚN');
@@ -620,7 +638,7 @@ $('generate').onclick=()=>{
       test.innerHTML='<div class="result">No se puede generar el simulacro: deben existir exactamente 30 preguntas comunes y 70 específicas/EDISUR con los filtros elegidos.</div>';return;
     }
     const reserves=shuffle(reviewReserveCandidates(qs.map(q=>q.id))).slice(0,5);
-    state.current={ids:[...qs.map(q=>q.id),...reserves.map(q=>q.id)],reserveIds:reserves.map(q=>q.id),reviewOrdinaryCount:100,reviewReserveCount:reserves.length,answers:{},flags:{},filters:{...currentFilters(),n:'100'},startedAt:Date.now(),reviewTest:true,reviewKind:'SIMULACRO',reviewRule:'C1_LIBRE_E3_V12',reviewScoreScale:10,reviewStartedAt:Date.now(),reviewLimitSeconds:10800,reviewTimeExpired:false,reserveMigration:'SAME_TOPICS_V4'};
+    state.current={ids:[...qs.map(q=>q.id),...reserves.map(q=>q.id)],reserveIds:reserves.map(q=>q.id),reviewOrdinaryCount:100,reviewReserveCount:reserves.length,answers:{},flags:{},filters:{...currentFilters(),n:'100'},startedAt:Date.now(),reviewTest:true,reviewKind:'SIMULACRO',reviewRule:'C1_LIBRE_E3_V12',reviewScoreScale:10,reviewStartedAt:Date.now(),reviewLimitSeconds:10800,reviewRemainingSeconds:10800,reviewTimerMode:'PAUSE_V1',reviewActiveSince:null,lastActiveAt:Date.now(),reviewTimeExpired:false,reserveMigration:'SAME_TOPICS_V4'};
     saveState();renderTest([...qs,...reserves]);return;
   }
   let pool=[...filtered()];
@@ -632,7 +650,7 @@ $('generate').onclick=()=>{
   state.current={ids:qs.map(q=>q.id),answers:{},flags:{},filters:currentFilters(),startedAt:Date.now()};
   saveState();renderTest(qs)
 };
-$('resume').onclick=()=>{if(!state.current)return;ensureReviewReserves();const f=state.current.filters||{};if(f.parte){setSelectedValues(parte,Array.isArray(f.parte)?f.parte:[f.parte],true);refillTema();let tv=Array.isArray(f.tema)?f.tema:[f.tema||'ALL'];if(tv.length===1&&tv[0]!=='ALL'&&!String(tv[0]).includes('|')){const pv=selectedValues(parte);if(pv.length===1&&!pv.includes('ALL'))tv=[pv[0]+'|'+tv[0]]}setSelectedValues(tema,tv,true);refillOthers();setSelectedValues(cuerpo,Array.isArray(f.cuerpo)?f.cuerpo:[f.cuerpo||'ALL'],true);setSelectedValues(anio,Array.isArray(f.anio)?f.anio:[f.anio||'ALL'],true);renderAllMultiPickers();n.value=f.n||'20';modo.value=f.modo||'ALL';updateAvailable()}const qs=(state.current.ids||[]).map(qById).filter(Boolean);renderTest(qs,state.current.answers||{},state.current.flags||{},true)};
+$('resume').onclick=()=>{if(!state.current)return;migrateReviewTimerToPauseMode();ensureReviewReserves();const f=state.current.filters||{};if(f.parte){setSelectedValues(parte,Array.isArray(f.parte)?f.parte:[f.parte],true);refillTema();let tv=Array.isArray(f.tema)?f.tema:[f.tema||'ALL'];if(tv.length===1&&tv[0]!=='ALL'&&!String(tv[0]).includes('|')){const pv=selectedValues(parte);if(pv.length===1&&!pv.includes('ALL'))tv=[pv[0]+'|'+tv[0]]}setSelectedValues(tema,tv,true);refillOthers();setSelectedValues(cuerpo,Array.isArray(f.cuerpo)?f.cuerpo:[f.cuerpo||'ALL'],true);setSelectedValues(anio,Array.isArray(f.anio)?f.anio:[f.anio||'ALL'],true);renderAllMultiPickers();n.value=f.n||'20';modo.value=f.modo||'ALL';updateAvailable()}const qs=(state.current.ids||[]).map(qById).filter(Boolean);renderTest(qs,state.current.answers||{},state.current.flags||{},true)};
 function updateResume(){const b=$('resume'),info=$('resumeInfo');if(state.current?.ids?.length){let done=Object.keys(state.current.answers||{}).length,total=state.current.ids.length;b.disabled=false;b.textContent=`↻ Reanudar test (${done}/${total})`;info.classList.add('show');info.textContent=`Tienes un test en curso: ${done} de ${total} preguntas respondidas. Puedes cerrarlo y continuar más tarde; con la nube iniciada podrás retomarlo también desde otro dispositivo.`}else{b.disabled=true;b.textContent='↻ Reanudar último test';info.classList.remove('show');info.textContent=''}}
 function statPart(q){
   const raw=String(effectivePart(q)||'').toUpperCase();
