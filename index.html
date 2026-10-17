@@ -190,11 +190,14 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
  <div class="note" style="margin:5px 0 10px">En los repasos individuales se muestra el porcentaje de aciertos sobre todas las preguntas del test (sin penalización por errores ni por respuestas en blanco). Los simulacros mantienen la nota oficial /10. Los repasos individuales se agrupan por tema. Pulsa un tema para desplegar todos los test realizados, sus notas y la evolución. Los test EDISUR se consultan únicamente en su apartado independiente.</div>
  <div style="overflow:auto"><table class="review-table"><thead><tr><th>Tema</th><th class="num">Tests</th><th class="num">Media aciertos %</th><th class="num">Último %</th><th class="num">Mejor %</th><th>Progreso</th></tr></thead><tbody id="topicReviewHistory"><tr><td colspan="6">Todavía no hay repasos individuales sin EDISUR finalizados.</td></tr></tbody></table></div>
 </div>
-<div class="card" id="edisurStatsCard"><div class="section-title"><h2>Estadísticas exclusivas EDISUR</h2><span>Separadas del temario oficial y de los simulacros</span></div>
-<div class="review-kpis"><div class="review-kpi"><strong id="edisurTests">0</strong><span>Tests con EDISUR</span></div><div class="review-kpi"><strong id="edisurAttempts">0</strong><span>Respuestas EDISUR</span></div><div class="review-kpi"><strong id="edisurAccuracy">—</strong><span>Acierto EDISUR</span></div></div>
-<div style="overflow:auto"><table class="review-table"><thead><tr><th>Tema EDISUR</th><th class="num">Respuestas</th><th class="num">Aciertos</th><th class="num">Errores</th><th class="num">Acierto %</th></tr></thead><tbody id="edisurThemeStats"></tbody></table></div>
-<h3 style="margin:18px 0 8px">Historial de tests con preguntas EDISUR</h3><div class="note">Los tests mixtos que contienen EDISUR se muestran aquí, y no en las estadísticas de simulacros ni en los repasos individuales.</div>
-<div style="overflow:auto"><table class="review-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Temas</th><th class="num">Preguntas EDISUR</th><th class="num">Aciertos EDISUR</th><th class="num">Acierto %</th></tr></thead><tbody id="edisurHistory"></tbody></table></div></div>
+<div class="card" id="edisurStatsCard"><div class="section-title"><h2>EDISUR · estadísticas por tema</h2><span>Independientes del temario oficial</span></div>
+<div class="review-kpis"><div class="review-kpi"><strong id="edisurTests">0</strong><span>Tests EDISUR</span></div><div class="review-kpi"><strong id="edisurAttempts">0</strong><span>Respuestas</span></div><div class="review-kpi"><strong id="edisurAccuracy">—</strong><span>Aciertos %</span></div></div>
+<div style="overflow:auto"><table class="review-table"><thead><tr><th>Tema</th><th class="num">Tests</th><th class="num">Media %</th><th class="num">Último %</th><th class="num">Mejor %</th><th>Detalle</th></tr></thead><tbody id="edisurThemeStats"></tbody></table></div>
+</div>
+<div class="card" id="c12100OnlyStatsCard"><div class="section-title"><h2>C1.2100 · cuerpo específico</h2><span>Solo preguntas oficiales C1.2100 · sin EDISUR</span></div>
+<div class="review-kpis"><div class="review-kpi"><strong id="c12100Tests">0</strong><span>Tests con preguntas C1.2100</span></div><div class="review-kpi"><strong id="c12100Attempts">0</strong><span>Respuestas</span></div><div class="review-kpi"><strong id="c12100Accuracy">—</strong><span>Aciertos %</span></div></div>
+<div style="overflow:auto"><table class="review-table"><thead><tr><th>Tema específico</th><th class="num">Tests</th><th class="num">Media %</th><th class="num">Último %</th><th class="num">Mejor %</th><th>Detalle</th></tr></thead><tbody id="c12100ThemeStats"></tbody></table></div>
+</div>
 
 <div id="reviewTimerBox" style="display:none;margin:0 0 12px;padding:12px 16px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-weight:700">
 ⏱️ Tiempo restante: <span id="reviewTimer">03:00:00</span><span id="reviewTimerMsg" style="margin-left:10px"></span>
@@ -492,15 +495,36 @@ function historyContainsEdisur(h){
  const f=h.filters||{};
  return [f.parte,f.tema,f.cuerpo].flat().some(v=>String(v||'').toUpperCase().includes('EDISUR'));
 }
-function renderEdisurStats(){
- const entries=Object.entries(state.stats||{}).map(([id,st])=>({q:qById(id),st})).filter(x=>x.q&&String(effectivePart(x.q)).toUpperCase()==='EDISUR');
- const total=entries.reduce((n,x)=>n+Number(x.st.a||0),0),correct=entries.reduce((n,x)=>n+Number(x.st.c||0),0);
- $('edisurAttempts').textContent=total;$('edisurAccuracy').textContent=total?(100*correct/total).toFixed(1)+'%':'—';
- const groups=new Map();entries.forEach(({q,st})=>{const t=String(effectiveTema(q)||q.tema||'?');if(!groups.has(t))groups.set(t,{a:0,c:0,w:0});const x=groups.get(t);x.a+=Number(st.a||0);x.c+=Number(st.c||0);x.w+=Number(st.w||0)});
- $('edisurThemeStats').innerHTML=[...groups].sort((a,b)=>Number(a[0])-Number(b[0])).map(([t,x])=>`<tr><td>EDISUR · Tema ${esc(t)}</td><td class="num">${x.a}</td><td class="num">${x.c}</td><td class="num">${x.w}</td><td class="num">${x.a?(100*x.c/x.a).toFixed(1):0}%</td></tr>`).join('')||'<tr><td colspan="5">Todavía no hay respuestas EDISUR.</td></tr>';
- const hs=(state.history||[]).filter(historyContainsEdisur).sort((a,b)=>Number(b.finishedAt||0)-Number(a.finishedAt||0));$('edisurTests').textContent=hs.length;
- $('edisurHistory').innerHTML=hs.map(h=>{const items=(h.items||[]).slice(0,Number(h.reviewOrdinaryCount)||h.items?.length||0).filter(it=>{const q=qById(it.id);return q&&String(effectivePart(q)).toUpperCase()==='EDISUR'});const ok=items.filter(it=>it.answer!=null&&it.correct===true).length;const themes=[...new Set(items.map(it=>String(effectiveTema(qById(it.id)))))].sort((a,b)=>Number(a)-Number(b));return `<tr><td>${h.finishedAt?new Date(h.finishedAt).toLocaleString():'—'}</td><td>${h.reviewTest?(inferReviewKind(h)==='SIMULACRO'?'Simulacro mixto':'Repaso individual'):'Test'}</td><td>${themes.map(t=>'Tema '+esc(t)).join(', ')||'EDISUR'}</td><td class="num">${items.length}</td><td class="num">${ok}</td><td class="num">${items.length?(100*ok/items.length).toFixed(1):'—'}%</td></tr>`}).join('')||'<tr><td colspan="6">Todavía no hay tests EDISUR en el historial.</td></tr>';
+function isC12100Specific(q){
+ if(!q||String(effectivePart(q)).toUpperCase()!=='ESPECÍFICO')return false;
+ return /(?:^|[^0-9])C1[.\s-]*2100(?:[^0-9]|$)/i.test(String(q.cuerpo||'')) && !/EDISUR/i.test(String(q.cuerpo||''));
 }
+function renderExclusiveCompact(cfg){
+ const matches=cfg.match, entries=Object.entries(state.stats||{}).map(([id,st])=>({q:qById(id),st})).filter(x=>matches(x.q));
+ const attempts=entries.reduce((n,x)=>n+Number(x.st.a||0),0),correct=entries.reduce((n,x)=>n+Number(x.st.c||0),0);
+ $(cfg.prefix+'Attempts').textContent=attempts;$(cfg.prefix+'Accuracy').textContent=attempts?(100*correct/attempts).toFixed(1)+'%':'—';
+ const groups=new Map(),uniqueTests=new Set();
+ (state.history||[]).forEach((h,hi)=>{
+  const items=(h.items||[]).slice(0,Number(h.reviewOrdinaryCount)||h.items?.length||0);
+  const perTheme=new Map();
+  items.forEach(it=>{const q=qById(it.id);if(!matches(q))return;const t=String(effectiveTema(q)||q.tema||'?');if(!perTheme.has(t))perTheme.set(t,{total:0,ok:0});const x=perTheme.get(t);x.total++;if(it.answer!=null&&it.correct===true)x.ok++});
+  if(perTheme.size)uniqueTests.add(hi);
+  perTheme.forEach((x,t)=>{if(!groups.has(t))groups.set(t,[]);groups.get(t).push({date:Number(h.finishedAt||0),percent:100*x.ok/x.total,total:x.total,ok:x.ok});});
+ });
+ $(cfg.prefix+'Tests').textContent=uniqueTests.size;
+ const sorted=[...groups].sort((a,b)=>Number(a[0])-Number(b[0]));
+ $(cfg.prefix+'ThemeStats').innerHTML=sorted.map(([t,tests],i)=>{
+  tests.sort((a,b)=>a.date-b.date);const avg=tests.reduce((n,x)=>n+x.percent,0)/tests.length,last=tests.at(-1).percent,best=Math.max(...tests.map(x=>x.percent));
+  const details=[...tests].reverse().map((x,j)=>`<tr><td>${x.date?new Date(x.date).toLocaleString():'—'}</td><td class="num">${x.total}</td><td class="num">${x.ok}</td><td class="num"><b>${x.percent.toFixed(1)}%</b></td></tr>`).join('');
+  return `<tr class="topic-summary-row" data-exgroup="${cfg.prefix}-${i}" style="cursor:pointer"><td><span class="theme-toggle">▸</span> ${cfg.label} · Tema ${esc(t)}</td><td class="num">${tests.length}</td><td class="num">${avg.toFixed(1)}%</td><td class="num">${last.toFixed(1)}%</td><td class="num">${best.toFixed(1)}%</td><td>Ver tests ▾</td></tr><tr data-exdetail="${cfg.prefix}-${i}" style="display:none"><td colspan="6"><table class="review-table"><thead><tr><th>Fecha</th><th class="num">Preguntas</th><th class="num">Aciertos</th><th class="num">Puntuación</th></tr></thead><tbody>${details}</tbody></table></td></tr>`;
+ }).join('')||'<tr><td colspan="6">Todavía no hay tests finalizados de este grupo.</td></tr>';
+ $(cfg.prefix+'ThemeStats').querySelectorAll('[data-exgroup]').forEach(row=>row.onclick=()=>{const d=$(cfg.prefix+'ThemeStats').querySelector(`[data-exdetail="${row.dataset.exgroup}"]`);const open=d.style.display!=='none';d.style.display=open?'none':'table-row';row.querySelector('.theme-toggle').textContent=open?'▸':'▾'});
+}
+function renderEdisurStats(){
+ renderExclusiveCompact({prefix:'edisur',label:'EDISUR',match:q=>!!q&&String(effectivePart(q)).toUpperCase()==='EDISUR'});
+ renderExclusiveCompact({prefix:'c12100',label:'Específico C1.2100',match:isC12100Specific});
+}
+
 function reviewHistoryRows(){
  const all=(state.history||[]).filter(h=>h.reviewTest).sort((a,b)=>Number(b.finishedAt||0)-Number(a.finishedAt||0));
  const sims=all.filter(h=>inferReviewKind(h)==='SIMULACRO' && !historyContainsEdisur(h) && Number(h.finishedAt||0)>=1792253820000);
