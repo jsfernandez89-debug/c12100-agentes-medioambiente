@@ -191,11 +191,11 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
  <div style="overflow:auto"><table class="review-table"><thead><tr><th>Tema</th><th class="num">Tests</th><th class="num">Media aciertos %</th><th class="num">Último %</th><th class="num">Mejor %</th><th>Progreso</th></tr></thead><tbody id="topicReviewHistory"><tr><td colspan="6">Todavía no hay repasos individuales sin EDISUR finalizados.</td></tr></tbody></table></div>
 </div>
 <div class="card" id="edisurStatsCard"><div class="section-title"><h2>EDISUR · estadísticas por tema</h2><span>Independientes del temario oficial</span></div>
-<div class="review-kpis"><div class="review-kpi"><strong id="edisurTests">0</strong><span>Tests EDISUR</span></div><div class="review-kpi"><strong id="edisurAttempts">0</strong><span>Respuestas</span></div><div class="review-kpi"><strong id="edisurAccuracy">—</strong><span>Aciertos %</span></div></div>
+<div class="review-kpis"><div class="review-kpi"><strong id="edisurTests">0</strong><span>Tests EDISUR</span></div><div class="review-kpi"><strong id="edisurAttempts">0</strong><span>Respuestas</span></div><div class="review-kpi"><strong id="edisurAccuracy">—</strong><span>Aciertos %</span></div><div class="review-kpi"><strong id="edisurMean">—</strong><span>Media de aciertos %</span></div></div>
 <div style="overflow:auto"><table class="review-table"><thead><tr><th>Tema</th><th class="num">Tests</th><th class="num">Media %</th><th class="num">Último %</th><th class="num">Mejor %</th><th>Detalle</th></tr></thead><tbody id="edisurThemeStats"></tbody></table></div>
 </div>
 <div class="card" id="c12100OnlyStatsCard"><div class="section-title"><h2>C1.2100 · común y específico</h2><span>Preguntas C1.2100, agrupadas por parte · sin EDISUR</span></div>
-<div class="review-kpis"><div class="review-kpi"><strong id="c12100Tests">0</strong><span>Tests con preguntas C1.2100</span></div><div class="review-kpi"><strong id="c12100Attempts">0</strong><span>Respuestas</span></div><div class="review-kpi"><strong id="c12100Accuracy">—</strong><span>Aciertos %</span></div></div>
+<div class="review-kpis"><div class="review-kpi"><strong id="c12100Tests">0</strong><span>Tests con preguntas C1.2100</span></div><div class="review-kpi"><strong id="c12100Attempts">0</strong><span>Respuestas</span></div><div class="review-kpi"><strong id="c12100Accuracy">—</strong><span>Aciertos %</span></div><div class="review-kpi"><strong id="c12100Mean">—</strong><span>Media de aciertos %</span></div></div>
 <div style="overflow:auto"><table class="review-table"><thead><tr><th>Bloque / Tema</th><th class="num">Tests</th><th class="num">Media %</th><th class="num">Último %</th><th class="num">Mejor %</th><th>Detalle</th></tr></thead><tbody id="c12100ThemeStats"></tbody></table></div>
 </div>
 
@@ -513,6 +513,8 @@ function renderExclusiveCompact(cfg){
   perTheme.forEach((x,t)=>{if(!groups.has(t))groups.set(t,[]);groups.get(t).push({date:Number(h.finishedAt||0),percent:100*x.ok/x.total,total:x.total,ok:x.ok});});
  });
  if(cfg.resetFrom){const vals=[...groups.values()].flat();const a=vals.reduce((n,v)=>n+v.total,0),c=vals.reduce((n,v)=>n+v.ok,0);$(cfg.prefix+'Attempts').textContent=a;$(cfg.prefix+'Accuracy').textContent=a?(100*c/a).toFixed(1)+'%':'—';}
+ const allTestResults=[...groups.values()].flat();
+ $(cfg.prefix+'Mean').textContent=allTestResults.length?(allTestResults.reduce((n,x)=>n+x.percent,0)/allTestResults.length).toFixed(1)+'%':'—';
  $(cfg.prefix+'Tests').textContent=uniqueTests.size;
  const sorted=[...groups].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),'es',{numeric:true}));
  $(cfg.prefix+'ThemeStats').innerHTML=sorted.map(([t,tests],i)=>{
@@ -536,8 +538,9 @@ function compactThemeRows(id,byPart){
  tbody.innerHTML='';
  for(const [part,items] of groups){
   const tests=items.reduce((n,[r])=>n+(Number(r.cells[1]?.textContent)||0),0);
+  const mean=tests?items.reduce((n,[r])=>n+(Number(r.cells[1]?.textContent)||0)*(parseFloat(r.cells[2]?.textContent)||0),0)/tests:null;
   const heading=document.createElement('tr');heading.className='topic-summary-row';heading.style.cursor='pointer';
-  heading.innerHTML=`<td><b>▸ ${part==='EDISUR'?'Temas EDISUR':part==='COMÚN'?'Bloque común':'Bloque específico'}</b></td><td class="num"><b>${tests}</b></td><td colspan="4">${items.length} temas · desplegar</td>`;
+  heading.innerHTML=`<td><b>▸ ${part==='EDISUR'?'Temas EDISUR':part==='COMÚN'?'Bloque común':'Bloque específico'}</b></td><td class="num"><b>${tests}</b></td><td class="num"><b>${mean===null?'—':mean.toFixed(1)+'%'}</b></td><td colspan="3">${items.length} temas · desplegar</td>`;
   tbody.appendChild(heading);
   for(const [row,detail] of items){row.style.display='none';tbody.appendChild(row);if(detail){detail.style.display='none';tbody.appendChild(detail)}}
   let open=false;heading.onclick=()=>{open=!open;heading.cells[0].querySelector('b').textContent=(open?'▾ ':'▸ ')+(part==='EDISUR'?'Temas EDISUR':part==='COMÚN'?'Bloque común':'Bloque específico');for(const [row,detail] of items){row.style.display=open?'table-row':'none';if(!open&&detail){detail.style.display='none';const t=row.querySelector('.theme-toggle');if(t)t.textContent='▸'}}};
