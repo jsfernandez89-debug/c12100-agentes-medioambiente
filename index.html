@@ -568,6 +568,11 @@ function compactIndividualReviews(){
  for(const [part,items] of groups){
   const all=items.map(([r])=>({n:Number(r.cells[1]?.textContent)||0,p:parseFloat(r.cells[2]?.textContent)||0}));
   const n=all.reduce((v,x)=>v+x.n,0),mean=n?all.reduce((v,x)=>v+x.n*x.p,0)/n:0;
+  // Progress for the collapsed common/specific group is derived from its theme rows.
+  const deltas=items.map(([r])=>{const label=r.cells[5]?.textContent||'';const m=label.match(/([+-]?\d+(?:\.\d+)?)\s*pp/);return {n:Number(r.cells[1]?.textContent)||0,delta:m?Number(m[1]):null};}).filter(x=>x.delta!==null);
+  const totalWeight=deltas.reduce((sum,x)=>sum+x.n,0);
+  const delta=totalWeight?deltas.reduce((sum,x)=>sum+x.delta*x.n,0)/totalWeight:null;
+  const progress=delta===null?{text:'—',cls:'trend-flat'}:{text:Math.abs(delta)<0.05?'→ estable':(delta>0?'▲ +':'▼ ')+delta.toFixed(1)+' pp',cls:delta>0.05?'trend-up':delta<-.05?'trend-down':'trend-flat'};
   const heading=document.createElement('tr');heading.className='topic-summary-row';heading.style.cursor='pointer';
   heading.innerHTML=`<td><b>▸ Bloque ${part==='COMÚN'?'común':'específico'}</b></td><td class="num"><b>${n}</b></td><td class="num"><b>${n?mean.toFixed(1)+'%':'—'}</b></td><td colspan="2">${items.length} temas · desplegar</td><td class="${progress.cls}">${progress.text}</td><td></td>`;
   tbody.appendChild(heading);
