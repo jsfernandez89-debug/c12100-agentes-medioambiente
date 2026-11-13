@@ -188,7 +188,12 @@ button.mini{padding:5px 7px;font-size:10px;border-radius:7px}
  <h3 style="margin:22px 0 8px">Repasos por tema individual · sin EDISUR</h3>
  <div class="review-kpis"><div class="review-kpi"><strong id="topicReviewCount">0</strong><span>Tests por tema</span></div><div class="review-kpi"><strong id="topicReviewAvg">—</strong><span>Aciertos medios %</span></div><div class="review-kpi"><strong id="topicReviewLast">—</strong><span>Último test %</span></div><div class="review-kpi"><strong id="topicReviewBest">—</strong><span>Mejor test %</span></div></div>
  <div class="note" style="margin:5px 0 10px">En los repasos individuales se muestra el porcentaje de aciertos sobre todas las preguntas del test (sin penalización por errores ni por respuestas en blanco). Los simulacros mantienen la nota oficial /10. Los repasos individuales se agrupan por tema. Pulsa un tema para desplegar todos los test realizados, sus notas y la evolución. Los test EDISUR se consultan únicamente en su apartado independiente.</div>
- <div style="overflow:auto"><table class="review-table"><thead><tr><th>Tema</th><th class="num">Tests</th><th class="num">Media aciertos %</th><th class="num">Último %</th><th class="num">Mejor %</th><th>Progreso</th></tr></thead><tbody id="topicReviewHistory"><tr><td colspan="6">Todavía no hay repasos individuales sin EDISUR finalizados.</td></tr></tbody></table></div>
+ <div class="review-kpis" id="topicProgressSummary" style="margin:10px 0 12px">
+  <div class="review-kpi"><strong id="topicProgressGlobal">—</strong><span>Progreso global · sin EDISUR</span></div>
+  <div class="review-kpi"><strong id="topicProgressCommon">—</strong><span>Progreso · Común</span></div>
+  <div class="review-kpi"><strong id="topicProgressSpecific">—</strong><span>Progreso · Específico</span></div>
+</div>
+<div style="overflow:auto"><table class="review-table"><thead><tr><th>Tema</th><th class="num">Tests</th><th class="num">Media aciertos %</th><th class="num">Último %</th><th class="num">Mejor %</th><th>Progreso</th></tr></thead><tbody id="topicReviewHistory"><tr><td colspan="6">Todavía no hay repasos individuales sin EDISUR finalizados.</td></tr></tbody></table></div>
 </div>
 <div class="card" id="edisurStatsCard"><div class="section-title"><h2>EDISUR · estadísticas por tema</h2><span>Independientes del temario oficial</span></div>
 <div class="review-kpis"><div class="review-kpi"><strong id="edisurTests">0</strong><span>Tests EDISUR</span></div><div class="review-kpi"><strong id="edisurAttempts">0</strong><span>Respuestas</span></div><div class="review-kpi"><strong id="edisurAccuracy">—</strong><span>Aciertos %</span></div><div class="review-kpi"><strong id="edisurMean">—</strong><span>Media de aciertos %</span></div></div>
@@ -555,6 +560,23 @@ function compactThemeRows(id,byPart){
   let open=false;heading.onclick=()=>{open=!open;heading.cells[0].querySelector('b').textContent=(open?'▾ ':'▸ ')+(part==='EDISUR'?'Temas EDISUR':part==='COMÚN'?'Bloque común':'Bloque específico');for(const [row,detail] of items){row.style.display=open?'table-row':'none';if(!open&&detail){detail.style.display='none';const t=row.querySelector('.theme-toggle');if(t)t.textContent='▸'}}};
  }
 }
+function updateIndividualProgress(topics){
+ const ordered=[...topics].sort((a,b)=>Number(a.finishedAt||0)-Number(b.finishedAt||0));
+ const buckets={global:ordered,common:[],specific:[]};
+ ordered.forEach(t=>{const part=String(topicGroupInfo(t).key||'').split('|')[0].toUpperCase();
+  if(part==='COMÚN'||part==='COMUN')buckets.common.push(t);
+  else if(part==='ESPECÍFICO'||part==='ESPECIFICO')buckets.specific.push(t);
+ });
+ const display=(items)=>{
+  if(!items.length)return 'Sin test';
+  if(items.length===1)return '1 test · sin evolución';
+  const first=topicSuccessPercent(items[0]),last=topicSuccessPercent(items[items.length-1]);
+  const d=last-first;
+  return Math.abs(d)<0.05?'→ 0,0 pp':(d>0?'▲ +':'▼ ')+d.toFixed(1).replace('.',',')+' pp';
+ };
+ const targets=[['topicProgressGlobal',buckets.global],['topicProgressCommon',buckets.common],['topicProgressSpecific',buckets.specific]];
+ targets.forEach(([id,items])=>{const el=$(id);if(el)el.textContent=display(items)});
+}
 function compactIndividualReviews(){
  const tbody=$('topicReviewHistory');if(!tbody)return;
  const rows=[...tbody.children];if(!rows.some(r=>r.hasAttribute('data-topic-group')))return;
@@ -568,11 +590,12 @@ function compactIndividualReviews(){
  for(const [part,items] of groups){
   const all=items.map(([r])=>({n:Number(r.cells[1]?.textContent)||0,p:parseFloat(r.cells[2]?.textContent)||0}));
   const n=all.reduce((v,x)=>v+x.n,0),mean=n?all.reduce((v,x)=>v+x.n*x.p,0)/n:0;
-  // Progress for the collapsed common/specific group is derived from its theme rows.
-  const deltas=items.map(([r])=>{const label=r.cells[5]?.textContent||'';const m=label.match(/([+-]?\d+(?:\.\d+)?)\s*pp/);return {n:Number(r.cells[1]?.textContent)||0,delta:m?Number(m[1]):null};}).filter(x=>x.delta!==null);
-  const totalWeight=deltas.reduce((sum,x)=>sum+x.n,0);
-  const delta=totalWeight?deltas.reduce((sum,x)=>sum+x.delta*x.n,0)/totalWeight:null;
-  const progress=delta===null?{text:'—',cls:'trend-flat'}:{text:Math.abs(delta)<0.05?'→ estable':(delta>0?'▲ +':'▼ ')+delta.toFixed(1)+' pp',cls:delta>0.05?'trend-up':delta<-.05?'trend-down':'trend-flat'};
+  // Use chronological first and last test across the whole part, not a weighted average of theme changes.
+  const partTests=(state.history||[]).filter(h=>h.reviewTest&&inferReviewKind(h)==='TEMA'&&!historyContainsEdisur(h))
+    .filter(h=>{const p=String(topicGroupInfo(h).key||'').split('|')[0].toUpperCase();return part==='COMÚN'?(p==='COMÚN'||p==='COMUN'):(p==='ESPECÍFICO'||p==='ESPECIFICO')})
+    .sort((a,b)=>Number(a.finishedAt||0)-Number(b.finishedAt||0));
+  const delta=partTests.length>=2?topicSuccessPercent(partTests[partTests.length-1])-topicSuccessPercent(partTests[0]):null;
+  const progress=delta===null?{text:partTests.length?'1 test':'—',cls:'trend-flat'}:{text:Math.abs(delta)<0.05?'→ 0,0 pp':(delta>0?'▲ +':'▼ ')+delta.toFixed(1).replace('.',',')+' pp',cls:delta>0.05?'trend-up':delta<-.05?'trend-down':'trend-flat'};
   const heading=document.createElement('tr');heading.className='topic-summary-row';heading.style.cursor='pointer';
   heading.innerHTML=`<td><b>▸ Bloque ${part==='COMÚN'?'común':'específico'}</b></td><td class="num"><b>${n}</b></td><td class="num"><b>${n?mean.toFixed(1)+'%':'—'}</b></td><td colspan="2">${items.length} temas · desplegar</td><td class="${progress.cls}">${progress.text}</td><td></td>`;
   tbody.appendChild(heading);
@@ -594,7 +617,7 @@ function reviewHistoryRows(){
  // en las estadísticas de repasos individuales, ni en sus medias o evolución.
  const topics=all.filter(h=>inferReviewKind(h)==='TEMA' && !historyContainsEdisur(h));
  function fillKpis(arr,prefix){const scores=arr.map(h=>inferReviewKind(h)==='TEMA'?topicSuccessPercent(h):Number(h.officialScore)).filter(Number.isFinite);$(prefix+'Count').textContent=arr.length;$(prefix+'Avg').textContent=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(prefix==='topicReview'?1:2)+(prefix==='topicReview'?'%':''):'—';$(prefix+'Last').textContent=scores.length?scores[0].toFixed(prefix==='topicReview'?1:2)+(prefix==='topicReview'?'%':''):'—';$(prefix+'Best').textContent=scores.length?Math.max(...scores).toFixed(prefix==='topicReview'?1:2)+(prefix==='topicReview'?'%':''):'—'}
- fillKpis(sims,'review');fillKpis(topics,'topicReview');
+ fillKpis(sims,'review');fillKpis(topics,'topicReview');updateIndividualProgress(topics);
  const simTrend=progressTrend([...sims].reverse().map(h=>Number(h.officialScore)*10));$('reviewTrend').textContent=simTrend.text;
  $('reviewHistory').innerHTML=sims.length?sims.map((x,i)=>`<tr><td>Simulacro ${x.reviewNo||sims.length-i}</td><td>${x.finishedAt?new Date(x.finishedAt).toLocaleString():'—'}</td><td>${reviewTopicsFromItems((x.items||[]).slice(0,x.reviewOrdinaryCount||100))}</td><td class="num">${x.correct||0}</td><td class="num">${x.wrong||0}</td><td class="num">${x.blank||0}</td><td class="num"><b>${Number(x.officialScore||0).toFixed(2)}</b></td><td class="${progressTrend(sims.slice(i).reverse().map(h=>Number(h.officialScore)*10)).cls}">${progressTrend(sims.slice(i).reverse().map(h=>Number(h.officialScore)*10)).text}</td></tr>`).join(''):'<tr><td colspan="8">Todavía no hay simulacros finalizados.</td></tr>';
  if(!topics.length){$('topicReviewHistory').innerHTML='<tr><td colspan="6">Todavía no hay repasos individuales sin EDISUR finalizados.</td></tr>';return}
